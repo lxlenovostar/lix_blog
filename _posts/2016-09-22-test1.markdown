@@ -1,7 +1,0 @@
----
-layyout: default
-title: hello markdown1 
----
-　　
-# 我的第二篇文章1
-# markdown 
