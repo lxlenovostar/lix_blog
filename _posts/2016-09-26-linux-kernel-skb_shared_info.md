@@ -28,10 +28,11 @@ struct skb_shared_info {
 **frags** : the array of page table entries. Each entry is actually a TCP segment.   
 用于IP 分片的字段：   
 **frag_list** : This field points to the list of fragments for this packet if it is fragmented.      
-# TODO GRO   
 
 
 ### TCP分段和IP分片之间的关系
  
 
+# TODO TCP分段的实现   
+# TODO GRO   
 
