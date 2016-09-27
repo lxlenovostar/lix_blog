@@ -54,15 +54,6 @@ in the *socket buffer structure(struct sk_buff)*, which points to the end of the
 3. 记录SKB的clone次数 
 4. TODO GSO
 
-### TCP分段和IP分片之间的关系
-The handling of TCP segments is more efficient than IP
-fragments. IP fragmentation is not quite as common as it was in earlier days of the Internet.
-Fragmentation is used when a network segment has a smaller MTU than the packet size. IP
-fragmentation is necessary if the MTU of the outgoing device is smaller than the packet size. See
-Chapter 9 for more details about IP fragmentation. TCP segmentation, however, is far more
-common because it is the underlying mechanism for the transport of streaming data that occurs
-in most network traffic. 
-
 # TODO TCP分段的实现   
 # TODO GRO   
 
