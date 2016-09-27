@@ -40,7 +40,7 @@ connection, the selection of the MSS value was changed to **the minimum buffer
 size and the MTU of the outgoing interface (- 40)**. MSS numbers are 40 bytes    
 smaller than MTU numbers because MSS is just the TCP data size, which does not    
 include the 20 byte IP header and the 20 byte TCP header.   
-#### 防止IP分片的方法
+#### 防止IP分片的方法   
 The way MSS now works is that each host will first compare its outgoing    
 interface MTU with its own buffer and choose the lowest value as the MSS to send.    
 The hosts will then compare the MSS size received against their own interface MTU    
