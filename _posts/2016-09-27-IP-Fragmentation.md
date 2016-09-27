@@ -25,8 +25,8 @@ If the firewall is configured to allow non-initial fragments with insufficient
 information to properly match the filter, then a non-initial fragment attack through    
 the firewall could occur. 
 
-### Avoid IP Fragmentation: What TCP MSS Does and How It Works
-#### MSS
+### Avoid IP Fragmentation: What TCP MSS Does and How It Works   
+#### MSS   
 **The TCP Maximum Segment Size (MSS)** defines the maximum amount of data   
 that a host is willing to accept in a single TCP/IP datagram. This TCP/IP datagram       
 might be fragmented at the IP layer. The MSS value is sent as a TCP header       
