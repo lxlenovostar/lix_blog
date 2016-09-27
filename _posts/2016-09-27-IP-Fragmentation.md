@@ -47,7 +47,7 @@ The hosts will then compare the MSS size received against their own interface MT
 and again choose the lower of the two values.
 
 #### 实例
-![](https://github.com/lxlenovostar/lix_blog/blob/gh-pages/images/2016-09-27-IP-Fragmentation-1.jpg)   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-09-27-IP-Fragmentation-1.jpg)   
 - Host A compares its MSS buffer (16K) and its MTU (1500 - 40 = 1460) and uses    
 the lower value as the MSS (1460) to send to Host B.   
 - Host B receives Host A's send MSS (1460) and compares it to the value of its    
