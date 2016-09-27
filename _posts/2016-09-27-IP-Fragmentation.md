@@ -47,6 +47,9 @@ The hosts will then compare the MSS size received against their own interface MT
 and again choose the lower of the two values.
 
 #### 实例
+![](https://github.com/lxlenovostar/lix_blog/blob/gh-pages/images/2016-09-27-IP-Fragmentation-1.gif)   
+
+
 
 ### TCP分段和IP分片之间的关系
 The handling of TCP segments is more efficient than IP
