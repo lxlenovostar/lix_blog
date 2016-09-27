@@ -26,32 +26,44 @@ information to properly match the filter, then a non-initial fragment attack thr
 the firewall could occur. 
 
 ### Avoid IP Fragmentation: What TCP MSS Does and How It Works
-#### MSS 
-	**The TCP Maximum Segment Size (MSS)** defines the maximum amount of data that    
-a host is willing to accept in a single TCP/IP datagram. This TCP/IP datagram    
-might be fragmented at the IP layer. The MSS value is sent as a TCP header    
-option only in TCP SYN segments. Each side of a TCP connection reports its MSS    
-value to the other side. Contrary to popular belief, the MSS value is **not    
-negotiated between hosts**. The sending host **is required to limit the size    
-of data** in a single TCP segment to a value less than or equal to the MSS    
-reported by the receiving host.
-	In order to assist in avoiding IP fragmentation at the endpoints of the TCP    
+#### MSS
+**The TCP Maximum Segment Size (MSS)** defines the maximum amount of data   
+that a host is willing to accept in a single TCP/IP datagram. This TCP/IP datagram       
+might be fragmented at the IP layer. The MSS value is sent as a TCP header       
+option only in TCP SYN segments. Each side of a TCP connection reports its MSS       
+value to the other side. Contrary to popular belief, the MSS value is **not       
+negotiated between hosts**. The sending host **is required to limit the size       
+of data** in a single TCP segment to a value less than or equal to the MSS       
+reported by the receiving host.      
+In order to assist in avoiding IP fragmentation at the endpoints of the TCP    
 connection, the selection of the MSS value was changed to **the minimum buffer    
 size and the MTU of the outgoing interface (- 40)**. MSS numbers are 40 bytes    
 smaller than MTU numbers because MSS is just the TCP data size, which does not    
 include the 20 byte IP header and the 20 byte TCP header.   
 #### 防止IP分片的方法
-	The way MSS now works is that each host will first compare its outgoing    
+The way MSS now works is that each host will first compare its outgoing    
 interface MTU with its own buffer and choose the lowest value as the MSS to send.    
 The hosts will then compare the MSS size received against their own interface MTU    
 and again choose the lower of the two values.
 
 #### 实例
 ![](https://github.com/lxlenovostar/lix_blog/blob/gh-pages/images/2016-09-27-IP-Fragmentation-1.gif)   
+- Host A compares its MSS buffer (16K) and its MTU (1500 - 40 = 1460) and uses    
+the lower value as the MSS (1460) to send to Host B.   
+- Host B receives Host A's send MSS (1460) and compares it to the value of its    
+outbound interface MTU - 40 (4422).   
+- Host B sets the lower value (1460) as the MSS for sending IP datagrams to Host A.  
+- Host B compares its MSS buffer (8K) and its MTU (4462-40 = 4422) and uses 4422 as    
+the MSS to send to Host A.   
+- Host A receives Host B's send MSS (4422) and compares it to the value of its    
+outbound interface MTU -40 (1460).   
+- Host A sets the lower value (1460) as the MSS for sending IP datagrams to Host B.   
+**1460** is the value chosen by both hosts as the send MSS for each other. Often    
+the send MSS value will be the same on each end of a TCP connection.*Packets can    
+still become fragmented in the network between Router A and Router B if they encounter    
+a link with a lower MTU than that of either hosts' outbound interface.* 
 
-
-
-### TCP分段和IP分片之间的关系
+# TODO TCP分段和IP分片之间的关系
 The handling of TCP segments is more efficient than IP
 fragments. IP fragmentation is not quite as common as it was in earlier days of the Internet.
 Fragmentation is used when a network segment has a smaller MTU than the packet size. IP
