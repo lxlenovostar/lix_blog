@@ -35,7 +35,7 @@ echo 1048576 >  /cgroup/memory/limit_user/memory.limit_in_bytes
 分配1MB的内存给cgroup
 
 ##测试脚本：
-###脚本一消耗CPU
+###脚本一消耗CPU    
 ```
 #! /bin/bash
 
@@ -52,7 +52,7 @@ echo 30036 > /cgroup/cpu/limit_user/tasks
 可以看到CPU的占用会被限制到50%。
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-09-28-cgroup-test-2.jpg)
 
-###脚本二消耗内存
+###脚本二消耗内存    
 ```
 #! /bin/bash
 
