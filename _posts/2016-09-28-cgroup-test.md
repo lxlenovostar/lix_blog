@@ -44,12 +44,13 @@ while [ True ];do
     x=$x+1
 done;
 ```
-执行效果：
+执行效果：   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-09-28-cgroup-test-1.jpg)
 
 如上图所示CPU占用99%，执行以下命令：
 echo 30036 > /cgroup/cpu/limit_user/tasks
 可以看到CPU的占用会被限制到50%。
-
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-09-28-cgroup-test-2.jpg)
 
 ###脚本二消耗内存
 ```
