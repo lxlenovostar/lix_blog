@@ -54,6 +54,5 @@ in the *socket buffer structure(struct sk_buff)*, which points to the end of the
 3. 记录SKB的clone次数 
 4. TODO GSO
 
-# TODO TCP分段的实现   
 # TODO GRO   
 
