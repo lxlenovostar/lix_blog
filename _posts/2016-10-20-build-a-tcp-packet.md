@@ -2,6 +2,7 @@
 layout: default
 title: 自定义TCP包 
 ---
+
 # 自定义TCP包 
 
 ## 目标
@@ -54,13 +55,13 @@ title: 自定义TCP包
 271     skb->ip_summed = CHECKSUM_NONE;   
 272     skbcsum(skb, iph);
 273 
-274     /* 第五步 组建网络接口层的头部 */
+274     /* 第六步 组建网络接口层的头部 */
 275     err = build_ethhdr(skb); 
 276     if (err != 0) {
 277         return err;
 278     }
 279 
-280     /* 第六步 发送SKB */
+280     /* 第七步 发送SKB */
 281     err = dev_queue_xmit(skb);
 282 
 283     return err;
@@ -108,6 +109,8 @@ title: 自定义TCP包
 此时data和tail之间的内存空间就是可以存放传输信息。
 
 #### 组装TCP头部 
+TCP的头部定义如下:   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-10-20-tcp-header.jpg)   
 ```
 184 int build_tcphdr(struct sk_buff *skb)
 185 {
@@ -131,9 +134,75 @@ title: 自定义TCP包
 203 }
 ```
 第188行设置TCP头部所需要的内存空间，第189行用于设置skb的transport_header指针，方便后面的tcp_hdr函数使用。   
-
+第193和194行用于设置端口，第195和196行用于设置序号和确认号，第197行用于设置TCP头长度和FIN标志位，    
+第198行用于设置窗口值，第199行校验和先设置为0。
 
 #### 组装IP头部 
+IP的头部定义如下:   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-10-20-ip-header.jpg)   
+```
+161 int build_iphdr(struct sk_buff *skb)
+162 {
+163     struct iphdr *iph;
+164     
+165     skb_push(skb, sizeof(struct iphdr));
+166     skb_reset_network_header(skb);
+167     
+168     iph = ip_hdr(skb);
+169     *((__be16 *)iph) = htons((4 << 12) | (5 << 8) | (RT_TOS(20) & 0xff));
+170     iph->tot_len = htons(skb->len);
+171     iph->frag_off = htons(IP_DF);
+172     iph->ttl      = 64;
+173     iph->protocol = IPPROTO_TCP;
+174     iph->saddr    = in_aton(SOU_IP);
+175     iph->daddr    = in_aton(DST_IP);
+176     
+177     return 0;
+178 }
+```
+第165行设置IP头部所需要的内存空间，第169用于设置IP的版本、IHL和区分服务。第170行的tot_len为总长度。   
+第171行设置IP_DF表示没有IP分段。第171用于设置生存期，第172行用于设置协议，IP的头检验和暂时不设置。   
+第174和175行用于设置源地址和目标地址。   
+
+#### 组建网络接口层的头部 
+在网络接口层是获得本机发包网卡的MAC地址和网关的MAC地址。
+```
+124 int build_ethhdr(struct sk_buff *skb)
+125 {
+126     struct ethhdr *eth;
+127     struct net_device *dev;
+128     int err;
+129    
+130     dev = dev_get_by_name(&init_net, SOU_DEVICE);
+131     if (!dev) {
+132         printk(KERN_ERR"get device failed.");
+133         return -3;
+134     }
+135 
+136     skb->dev = dev;
+137     skb->pkt_type  = PACKET_OUTGOING;
+138     skb->local_df  = 1;
+139     skb->protocol = htons(ETH_P_IP);
+140 
+141     eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
+142     skb_reset_mac_header(skb);
+143 
+144     memcpy(eth->h_source, dev->dev_addr, ETH_ALEN);
+145    
+146     gate_addr = in_aton(GATE_IP);
+147     err = get_mac(eth->h_dest, gate_addr, RT_TOS(20), skb);
+148     if (err != 1) {
+149         kfree_skb(skb);
+150         if (net_ratelimit())
+151             printk(KERN_ERR"get device mac failed when send packets.err:%d", err);
+152             return err;
+153         }
+154 
+155     return 0;
+156 }
+```
+第130行获得网卡SOU_DEVICE在内核中的指针，用于获得MAC地址。第147行用于获得网关的MAC地址。   
+第138行的local_df是指"don't fragment"，设置为1代表不会被分段。
 
 ### 目的端实现
 
