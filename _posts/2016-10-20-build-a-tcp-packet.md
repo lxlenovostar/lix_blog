@@ -3,12 +3,12 @@ layout: default
 title: 自定义TCP包 
 ---
 
-# 自定义TCP包 
+# 在无套接字情况下，发送TCP包 
 
 ## 目标
 1. 不使用套接字进行数据包传输。
 2. 在源端机器的内核态，组建一个TCP包并发送到目标机器。
-3. 在目标机器的内核态对自定义TCP进行处理。
+3. 在目标机器的内核态对自定义TCP包进行处理。
 
 ### TCP/IP 参考模型
 因特网协议栈中的层：
@@ -21,8 +21,8 @@ title: 自定义TCP包
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-10-20-IP_stack_connections.svg.png)   
 当我们发送一个TCP包的时候，我们应该从最上层的*Application*层准备需要传输的信息，然后依次填充*Transport*、*Internet* 和 *Link* 的协议头部。
 
-### 源端实现
-#### 整体流程
+### 发送端实现
+#### 发送端整体流程
 ```
 243     /* 第一步 分配和设置sk_buff. */   
 244     skb = alloc_set_skb();  
@@ -70,8 +70,10 @@ title: 自定义TCP包
 #### 分配SKB
 内核中使用套接字缓冲区(struct sk_buff)表示协议栈中的数据包。    
 ```
-218 struct sk_buff * alloc_set_skb()
-219 {
+216 struct sk_buff * alloc_set_skb(void)
+217 {
+218     struct sk_buff *skb;
+219
 220     /* At least 32-bit aligned.  */
 221     int size = ALIGN(sizeof(struct ethhdr), 4) + ALIGN(sizeof(struct iphdr), 4) + ALIGN(sizeof(struct tcphdr), 4) + ALIGN    (MD5LEN, 4);
 222 
@@ -87,7 +89,7 @@ title: 自定义TCP包
 232     return skb;
 233 }
 ```
-第221行调整size为了四字节边界对奇。第223行分配一个新的sk_buff实例。第230行skb_reserve用于调整skb的headroom, 通过增加skb的data和tail指针。   
+第221行调整size为了四字节边界对齐。第223行分配一个新的sk_buff实例。第230行skb_reserve通过移动skb的data和tail指针, 来调整skb的headroom。   
 
 #### 拷贝传输信息
 这里直接在内核态中将要传输信息拷贝到skb, 而非像套接字编程中将数据从用户态拷贝到内核态中。   
@@ -105,8 +107,8 @@ title: 自定义TCP包
 215     return 0;
 216 }
 ```
-这里我们需要将一个伪MD5值传递到对端。第209行用于判断内存空间是否足够容纳MD5值，第212行的skb_push用于向前移动skb的data指针，   
-此时data和tail之间的内存空间就是可以存放传输信息。
+这里我们需要将一个伪MD5值传递到对端。第209行用于判断内存空间是否可以容纳MD5值，第212行的skb_push用于向前移动skb的data指针，   
+此时data和tail之间的内存空间就可以存放传输信息。
 
 #### 组装TCP头部 
 TCP的头部定义如下:   
@@ -133,7 +135,7 @@ TCP的头部定义如下:
 202     return 0;
 203 }
 ```
-第188行设置TCP头部所需要的内存空间，第189行用于设置skb的transport_header指针，方便后面的tcp_hdr函数使用。   
+第188行设置TCP头部所需要的内存空间，第189行用于设置skb的transport_header指针，这样做是为了方便后面的tcp_hdr函数使用。   
 第193和194行用于设置端口，第195和196行用于设置序号和确认号，第197行用于设置TCP头长度和FIN标志位，    
 第198行用于设置窗口值，第199行校验和先设置为0。
 
@@ -165,7 +167,7 @@ IP的头部定义如下:
 第174和175行用于设置源地址和目标地址。   
 
 #### 组建网络接口层的头部 
-在网络接口层是获得本机发包网卡的MAC地址和网关的MAC地址。
+在网络接口层主要是获得本机发包网卡的MAC地址和网关的MAC地址。
 ```
 124 int build_ethhdr(struct sk_buff *skb)
 125 {
@@ -205,4 +207,70 @@ IP的头部定义如下:
 第138行的local_df是指"don't fragment"，设置为1代表不会被分段。
 
 ### 目的端实现
+因为没有在目地端建立socket，我们在netfiter中对包进行处理，netfilter中hook点的位置如下：
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-10-20-ip-hook.jpg)   
+```
+60 struct nf_hook_ops nf_in_ops = {
+61     .list       = { NULL, NULL},
+62     .pf     = PF_INET,
+63 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)
+64     .hook           = nf_in,
+65     //.hooknum        = NF_INET_PRE_ROUTING,
+66     .hooknum        = NF_INET_LOCAL_IN,
+67 #else
+68     .hook           = nf_in_p,
+69     //.hooknum        = NF_IP_PRE_ROUTING,
+70     .hooknum        = NF_IP_LOCAL_IN,
+71 #endif
+72     .priority       = NF_IP_PRI_FIRST,
+73 };
+```
+hook函数如下：   
+```
+10 static unsigned int nf_in(
+11 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
+12         const struct nf_hook_ops *ops,
+13 #else
+14         unsigned int hooknum,
+15 #endif
+16         struct sk_buff *skb,
+17         const struct net_device *in,
+18         const struct net_device *out,
+19         int (*okfn)(struct sk_buff *))
+20 {
+21     unsigned short sport, dport;
+22     struct iphdr *iph;
+23     struct tcphdr *tcph;
+24     char *tcp_payload = NULL;
+25     size_t tcp_payload_len = 0;
+26     int i;
+27 
+28     iph = ip_hdr(skb);
+29     if (iph->protocol == IPPROTO_TCP) {
+30         tcph = (struct tcphdr *)(skb->data + (iph->ihl << 2));
+31 
+32         sport = tcph->source;
+33         dport = tcph->dest;
+34         if (ntohs(sport) == 6880 && ntohs(dport) == 6880) {
+35             printk(KERN_INFO "find a new packet");
+36             tcp_payload = (char *)((unsigned char *)tcph + (tcph->doff << 2));
+37             tcp_payload_len = ntohs(iph->tot_len) - (iph->ihl << 2) - (tcph->doff << 2);
+38 
+39             if (tcp_payload_len == 16)
+40                 for (i = 0; i < tcp_payload_len; ++i)
+41                     printk("%d:", tcp_payload[i]);
+42 
+43             return NF_DROP;
+44         }
+45     }
+46     return NF_ACCEPT;
+47 }
+```
+第29行到43行，我们对我们自己制造的TCP包进行处理。
 
+### 结论
+1. 使用此种方法对于传输少量数据可行，但是由于丢包的问题，需要增加ACK和重传机制。
+2. 改为per-cpu模式话，可以用于局域网中测试网卡性能。  
+
+### github地址
+[github地址](https://github.com/lxlenovostar/kernel_test/tree/master/model/build_receive_tcp)
