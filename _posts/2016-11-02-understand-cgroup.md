@@ -64,4 +64,11 @@ hierarchy中的多个cgroup是为了防止出现矛盾，如CPU subsystem为/cg1
 ### cgroup实现
 cgroups的实现本质上是给系统进程挂上钩子（hooks），当task运行的过程中涉及到某个资源时就会触发钩子上所附带
 的subsystem进行检测，最终根据资源类别的不同使用对应的技术进行资源限制和优先级分配。   
-![cgroup相关结构体](http://cdn2.infoqstatic.com/statics_s1_20161025-0357u2/resource/articles/docker-kernel-knowledge-cgroups-resource-isolation/zh/resources/0329014.png)   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-5.jpg)   
+
+Linux中管理task进程的数据结构为 task_struct（包含所有进程管理的信息），其中与cgroup相关的字段主要有两个，   
+一个是css_set *cgroups，表示指向css_set（包含进程相关的cgroups信息）的指针，一个task只对应一个css_set结构，   
+但是一个css_set可以被多个task使用。另一个字段是list_head cg_list，是一个链表的头指针，这个链表包含了所有的   
+链到同一个css_set的task进程（在图中使用的回环箭头，均表示可以通过该字段找到所有同类结构，获得信息）。
+
+每个css_set结构中都包含了一个指向cgroup_subsys_state（包含进程与一个特定子系统相关的信息）的指针数组。cgroup_subsys_state则指向了cgroup结构（包含一个cgroup的所有信息），通过这种方式间接的把一个进程和cgroup联系了起来，如下图6。
