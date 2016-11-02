@@ -34,14 +34,14 @@ hierarchy可以允许存在多个。如果进程模型是由init作为根节点�
 
 ### 规则1   
 同一个hierarchy可以附加一个或多个subsystem。如下图，cpu和memory的subsystem附加到了一个hierarchy。      
-![](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/images/RMG-rule1.png)   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-1.png)   
 
 ### 规则2
 一个subsystem可以附加到多个hierarchy，当且仅当这些hierarchy只有这唯一一个subsystem。如下图，小圈中的   
 数字表示subsystem附加的时间顺序，CPU subsystem附加到hierarchy A的同时不能再附加到hierarchy B，因为   
 hierarchy B已经附加了memory subsystem。如果hierarchy B与hierarchy A状态相同，没有附加过memory subsystem，   
 那么CPU subsystem同时附加到两个hierarchy是可以的。   
-![](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/images/RMG-rule2.png)   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-2.png)   
 
 ### 规则3 
 系统每次新建一个hierarchy时，该系统上的所有task默认构成了这个新建的hierarchy的初始化cgroup，这个cgroup   
@@ -51,7 +51,7 @@ hierarchy的不同cgroup中，但是一个task可以存在在不同hierarchy中�
 中的/cg1而不能加入同一个hierarchy中的/cg2，但是可以加入hierarchy B中的/cg3。实际上不允许让任务加入同一个   
 hierarchy中的多个cgroup是为了防止出现矛盾，如CPU subsystem为/cg1分配了30%，而为/cg2分配了50%，此时如果httpd   
 在这两个cgroup中，就会出现矛盾。   
-![](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/images/RMG-rule3.png)
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-3.png)   
 
 ### 规则4   
 进程（task）在fork自身时创建的子任务（child task）默认与原task在同一个cgroup中，但是child task允许被移动   
@@ -59,5 +59,9 @@ hierarchy中的多个cgroup是为了防止出现矛盾，如CPU subsystem为/cg1
 当httpd刚fork出另一个httpd时，在同一个hierarchy中的同一个cgroup中。但是随后如果PID为4840的httpd需要移动   
 到其他cgroup也是可以的，因为父子任务间已经独立。总结起来就是：初始化时子任务与父任务在同一个cgroup，但是    
 这种关系随后可以改变。   
-![](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/images/RMG-rule4.png)   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-4.png)   
 
+### cgroup实现
+cgroups的实现本质上是给系统进程挂上钩子（hooks），当task运行的过程中涉及到某个资源时就会触发钩子上所附带
+的subsystem进行检测，最终根据资源类别的不同使用对应的技术进行资源限制和优先级分配。   
+![cgroup相关结构体](http://cdn2.infoqstatic.com/statics_s1_20161025-0357u2/resource/articles/docker-kernel-knowledge-cgroups-resource-isolation/zh/resources/0329014.png)   
