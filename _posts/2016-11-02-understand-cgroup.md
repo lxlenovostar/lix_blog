@@ -71,4 +71,41 @@ Linux中管理task进程的数据结构为 task_struct（包含所有进程管�
 但是一个css_set可以被多个task使用。另一个字段是list_head cg_list，是一个链表的头指针，这个链表包含了所有的   
 链到同一个css_set的task进程（在图中使用的回环箭头，均表示可以通过该字段找到所有同类结构，获得信息）。
 
-每个css_set结构中都包含了一个指向cgroup_subsys_state（包含进程与一个特定子系统相关的信息）的指针数组。cgroup_subsys_state则指向了cgroup结构（包含一个cgroup的所有信息），通过这种方式间接的把一个进程和cgroup联系了起来，如下图6。
+每个css_set结构中都包含了一个指向 cgroup_subsys_state（包含进程与一个特定子系统相关的信息）的指针数组。   
+cgroup_subsys_state则指向了cgroup结构（包含一个cgroup的所有信息），通过这种方式间接的把一个进程和cgroup   
+联系了起来，如下图。      
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-6.jpg)   
+
+另一方面，cgroup结构体中有一个list_head css_sets字段，它是一个头指针，指向由cg_cgroup_link（包含cgroup与task   
+之间多对多关系的信息）形成的链表。由此获得的每一个cg_cgroup_link都包含了一个指向css_set *cg字段，指向了每一个   
+task的css_set。css_set结构中则包含tasks头指针，指向所有链到此css_set的task进程构成的链表。至此，我们就明白如何   
+查看在同一个cgroup中的task有哪些了，如下图。    
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-7.jpg)   
+
+# TODO: 这里理解的不清楚。   
+那么为什么要使用cg_cgroup_link结构体呢？因为task与cgroup之间是多对多的关系。熟悉数据库的读者很容易理解，在数据库中，   
+如果两张表是多对多的关系，那么如果不加入第三张关系表，就必须为一个字段的不同添加许多行记录，导致大量冗余。通过从主表   
+和副表各拿一个主键新建一张关系表，可以提高数据查询的灵活性和效率。    
+而一个task可能处于不同的cgroup，只要这些cgroup在不同的hierarchy中，并且每个hierarchy挂载的子系统不同；另一方面，一个   
+cgroup中可以有多个task，这是显而易见的，但是这些task因为可能还存在在别的cgroup中，所以它们对应的css_set也不尽相同，所以   
+一个cgroup也可以对应多个css_set。在系统运行之初，内核的主函数就会对root cgroups和css_set进行初始化，每次task进行fork/exit   
+时，都会附加（attach）/分离（detach）对应的css_set。
+综上所述，添加cg_cgroup_link主要是出于性能方面的考虑，一是节省了task_struct结构体占用的内存，二是提升了进程fork()/exit()的速度。
+
+定义子系统的结构体是cgroup_subsys，在下图中可以看到，cgroup_subsys中定义了一组函数的接口，让各个子系统自己去实现，   
+类似的思想还被用在了cgroup_subsys_state中，cgroup_subsys_state并没有定义控制信息，只是定义了各个子系统都需要用到的   
+公共信息，由各个子系统各自按需去定义自己的控制信息结构体，最终在自定义的结构体中把cgroup_subsys_state包含进去，然后   
+内核通过container_of（这个宏可以通过一个结构体的成员找到结构体自身）等宏定义来获取对应的结构体。    
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-9.jpg)   
+
+### cgroup文件系统的实现
+Linux VFS是所谓的虚拟文件系统转换，是一个内核软件层，用来处理与Unix标准文件系统的所有系统调用。VFS对用户提供   
+统一的读写等文件操作调用接口，当用户调用读写等函数时，内核则调用特定的文件系统实现。具体而言，文件在内核内存中是   
+一个file数据结构来表示的。这个数据结构包含一个f_op的字段，该字段中包含了一组指向特定文件系统实现的函数指针。   
+当用户执行read()操作时，内核调用sys_read(),然后sys_read()查找到指向该文件属于的文件系统的读函数指针，并调用它，   
+即file->f_op->read()。      
+VFS 文件系统定义了以下对象模型：   
+1. 超级块对象(superblock object):存放已安装文件系统的有关信息。
+2. 索引节点对象(inode object):存放关于具体文件的一般信息。
+3. 文件对象（ file object）:存放打开文件与进程之间的交互信息
+4. 目录项对象(dentry object):存放目录项与对应文件进行链接的有关信息。
