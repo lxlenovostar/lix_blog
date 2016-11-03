@@ -99,3 +99,6 @@ Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/u
 4. res_counter 和内存子系统的联系？ 
 5. 内核/proc统计内存的方法？
 6. 命名空间 和 如何实现Docker ?  
+7. 如何统计文件cache?
+8. 为什么要强调是以线程统计?
+9. cgroup的回收机制和整个系统的回收机制的联系
