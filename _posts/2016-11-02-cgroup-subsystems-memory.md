@@ -78,6 +78,51 @@ res_counter_charge_locked这个函数，这个函数顾名思义就是在加锁�
 首先判断是否已经超过使用上限，如果是的话就增加失败次数，返回相关代码；否则就增加   
 使用量的值，如果这个值已经超过历史最大值，则更新最大值。   
 
+内存子系统定义了一个叫mem_cgroup的结构体来管理cgroup相关的内存使用信息。
+```
+struct mem_cgroup {
+	//**TODO**cgroup_subsys_state成员，便于task或cgroup获取mem_cgroup。
+	struct cgroup_subsys_state css;	
+	/* 两个res_counter成员，分别用于管理memory资源和memory+swap资源 */
+	struct res_counter res;
+	struct res_counter memsw;
+	struct mem_cgroup_lru_info info;
+	spinlock_t reclaim_param_lock;
+	int prev_priority;
+	int last_scanned_child;
+	/* use_hierarchy则用来标记资源控制和记录时是否是层次性的。*/
+	bool use_hierarchy;
+	atomic_t oom_lock;
+	atomic_t refcnt;
+	unsigned int swappiness;
+	/* oom_kill_disable则表示是否使用oom-killer。*/
+	int oom_kill_disable;   
+	/*
+	 如果memsw_is_minimum为true，则res.limit=memsw.limit，即当进程组使用的   
+ 	 内存超过memory的限制时，不能通过swap来缓解。   
+	*/
+	bool memsw_is_minimum;
+	struct mutex thresholds_lock;
+	struct mem_cgroup_thresholds thresholds;
+	struct mem_cgroup_thresholds memsw_thresholds;
+	/* oom_notify指向一个oom notifier event fd链表。*/
+	struct list_head oom_notify;
+	unsigned long move_charge_at_immigrate;
+	struct mem_cgroup_stat_cpu *stat;
+};
+```
+内核的实现是通过mm_struct知道术语它的进程，通过函数mem_cgroup_from_task()得到mem_cgroup,然后进行内存统计。   
+
+### cgroup的任务和内存子系统之间的联系
+**mm_struct==>task_struct==>cgroup_subsys_state=>mem_cgroup==>res**
+```
+mem_cgroup_from_task ==>   
+                     mem_cgroup_from_css ==>
+                                         task_css ==>
+                                                  task_css_check 
+```
+
+
 ## Charge/Uncharge
 Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/uncharge.   
 1. Charge
@@ -89,16 +134,24 @@ Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/u
 - (Memory) Usage -= PAGE_SIZE
 - Remove the check
 
+# 在内核中的实现位置？
+# 大概的实现？
+
 ## LRU
+
 ## Performance
 
+## 应用中需要注意
+
+
+
 # 需要理解的问题：
-1. 内存子系统如何和进程联系起来？ 
-2. 内存子系统中的LRU有什么用？ 
 3. charge在具体内存分配中的应用举例？参考github的博客。
-4. res_counter 和内存子系统的联系？ 
-5. 内核/proc统计内存的方法？
-6. 命名空间 和 如何实现Docker ?  
 7. 如何统计文件cache?
 8. 为什么要强调是以线程统计?
 9. cgroup的回收机制和整个系统的回收机制的联系
+2. 内存子系统中的LRU有什么用？ 
+5. 内核/proc统计内存的方法？
+6. 命名空间 和 如何实现Docker ?  
+1. 内存子系统如何和进程联系起来？ OK 
+4. res_counter 和内存子系统的联系？ OK
