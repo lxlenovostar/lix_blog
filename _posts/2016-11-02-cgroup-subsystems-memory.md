@@ -131,7 +131,7 @@ Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/u
 - Check a page as “This page is charged”
  
 比如在page fault发生时的情况：   
-![](http://hustcat.github.io/assets/2015-11-30-cgroup-memory-statistic-again-1.jpg)   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-cgroup-subsystems-memory-1.jpg)   
 而mem_cgroup_newpage_charge()的调用如下：    
 ```
 mem_cgroup_newpage_charge==>
@@ -152,6 +152,42 @@ mem_cgroup_newpage_charge==>
 # 大概的实现？
 
 ## LRU
+Memory controller has its own LRU.
+These LRUs are maintained per-zone.
+
+## 页面回收
+Global VM's memory reclaim logic is triggered at memory shortage in a zone.
+1. It's important where we reclaim memory from and the kernel may have to reclaim continuous pages.
+2. Kswapd works.
+3. Slabs are dropped.
+
+Memcg's memory reclaim is triggered at memory usage hits its limit.
+1. Just reducing memory is important. No care about placement of pages.
+```
+unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *memcg,
+                       gfp_t gfp_mask,
+                       bool noswap)
+{
+    struct zonelist *zonelist;
+    unsigned long nr_reclaimed;
+    int nid; 
+    struct scan_control sc = {
+        .may_writepage = !laptop_mode,
+        .may_unmap = 1, 
+        .may_swap = !noswap,
+        .nr_to_reclaim = SWAP_CLUSTER_MAX,
+        .order = 0, 
+        .priority = DEF_PRIORITY,
+        .target_mem_cgroup = memcg,
+        .nodemask = NULL, /* we don't care the placement */
+        .gfp_mask = (gfp_mask & GFP_RECLAIM_MASK) |
+                (GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK),
+    };   
+
+```
+sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面回收。
+2. No kswapd help (now)
+3. No slab drop.
 
 ## Performance
 
@@ -160,7 +196,6 @@ mem_cgroup_newpage_charge==>
 
 
 # 需要理解的问题：
-3. charge在具体内存分配中的应用举例？参考github的博客。
 7. 如何统计文件cache?
 8. 为什么要强调是以线程统计?
 9. cgroup的回收机制和整个系统的回收机制的联系
@@ -169,3 +204,4 @@ mem_cgroup_newpage_charge==>
 6. 命名空间 和 如何实现Docker ?  
 1. 内存子系统如何和进程联系起来？ OK 
 4. res_counter 和内存子系统的联系？ OK
+3. charge在具体内存分配中的应用举例？参考github的博客。OK
