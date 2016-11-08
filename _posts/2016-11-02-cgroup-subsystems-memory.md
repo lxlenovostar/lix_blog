@@ -116,10 +116,10 @@ struct mem_cgroup {
 ### cgroup的任务和内存子系统之间的联系
 **mm_struct==>task_struct==>cgroup_subsys_state=>mem_cgroup==>res**
 ```
-mem_cgroup_from_task ==>   
-                     mem_cgroup_from_css ==>
-                                         task_css ==>
-                                                  task_css_check 
+mem_cgroup_from_task ==>
+	mem_cgroup_from_css ==>
+		task_css ==>
+			task_css_check 
 ```
 
 
@@ -130,6 +130,20 @@ Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/u
 - Free/cull memory if usage hit limits
 - Check a page as “This page is charged”
  
+比如在page fault发生时的情况：   
+![](http://hustcat.github.io/assets/2015-11-30-cgroup-memory-statistic-again-1.jpg)   
+而mem_cgroup_newpage_charge()的调用如下：    
+```
+mem_cgroup_newpage_charge==>
+	mem_cgroup_charge_common==>
+		__mem_cgroup_try_charge==>
+			mem_cgroup_do_charge==>   
+				mem_cgroup_reclaim
+				mem_cgroup_oom
+		__mem_cgroup_commit_charge
+```   
+通过上面的调用关系可以知道，在charge中有回收操作。
+
 2. Uncharge
 - (Memory) Usage -= PAGE_SIZE
 - Remove the check
