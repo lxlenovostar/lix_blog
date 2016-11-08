@@ -148,21 +148,22 @@ mem_cgroup_newpage_charge==>
 - (Memory) Usage -= PAGE_SIZE
 - Remove the check
 
-# 在内核中的实现位置？
-# 大概的实现？
-
 ## LRU
-Memory controller has its own LRU.
-These LRUs are maintained per-zone.
+Memory controller has its own LRU. These LRUs are maintained per-zone.   
 
 ## 页面回收
+页面回收流程如下：   
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-cgroup-subsystems-memory-2.jpg)   
 Global VM's memory reclaim logic is triggered at memory shortage in a zone.
 1. It's important where we reclaim memory from and the kernel may have to reclaim continuous pages.
 2. Kswapd works.
 3. Slabs are dropped.
 
 Memcg's memory reclaim is triggered at memory usage hits its limit.
-1. Just reducing memory is important. No care about placement of pages.
+1. Just reducing memory is important. No care about placement of pages.    
+2. No kswapd help (now)
+3. No slab drop.    
+
 ```
 unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *memcg,
                        gfp_t gfp_mask,
@@ -184,24 +185,20 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *memcg,
                 (GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK),
     };   
 
-```
+```   
 sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面回收。
-2. No kswapd help (now)
-3. No slab drop.
 
-## Performance
 
 ## 应用中需要注意
 
 
-
 # 需要理解的问题：
 7. 如何统计文件cache?
-8. 为什么要强调是以线程统计?
-9. cgroup的回收机制和整个系统的回收机制的联系
-2. 内存子系统中的LRU有什么用？ 
-5. 内核/proc统计内存的方法？
 6. 命名空间 和 如何实现Docker ?  
+8. 为什么要强调是以线程统计?
+5. 内核/proc统计内存的方法？
 1. 内存子系统如何和进程联系起来？ OK 
 4. res_counter 和内存子系统的联系？ OK
 3. charge在具体内存分配中的应用举例？参考github的博客。OK
+9. cgroup的回收机制和整个系统的回收机制的联系 OK
+2. 内存子系统中的LRU有什么用？OK 
