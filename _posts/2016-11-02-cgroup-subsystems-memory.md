@@ -122,7 +122,6 @@ mem_cgroup_from_task ==>
 			task_css_check 
 ```
 
-
 ## Charge/Uncharge
 Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/uncharge.   
 1. Charge
@@ -130,7 +129,8 @@ Memory cgroup accounts usage of memory. There are roughly 2 operations, charge/u
 - Free/cull memory if usage hit limits
 - Check a page as “This page is charged”
  
-比如在page fault发生时的情况：   
+### 应用场景一 
+在page fault发生时的情况：   
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-cgroup-subsystems-memory-1.jpg)   
 而mem_cgroup_newpage_charge()的调用如下：    
 ```
@@ -143,6 +143,19 @@ mem_cgroup_newpage_charge==>
 		__mem_cgroup_commit_charge
 ```   
 通过上面的调用关系可以知道，在charge中有回收操作。
+
+### 应用场景二
+在文件读写操作过程中会产生缓存，cgroup同样会处理。   
+```
+/* This function is used to add a page to the pagecache. */
+add_to_page_cache_locked==>    
+	mem_cgroup_cache_charge==>
+		mem_cgroup_charge_common==>
+			__mem_cgroup_try_charge
+			__mem_cgroup_commit_charge
+		__mem_cgroup_try_charge_swapin
+		__mem_cgroup_try_charge_swapin		
+```
 
 2. Uncharge
 - (Memory) Usage -= PAGE_SIZE
@@ -193,7 +206,6 @@ sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面�
 
 
 # 需要理解的问题：
-7. 如何统计文件cache?
 6. 命名空间 和 如何实现Docker ?  
 8. 为什么要强调是以线程统计?
 5. 内核/proc统计内存的方法？
@@ -202,3 +214,4 @@ sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面�
 3. charge在具体内存分配中的应用举例？参考github的博客。OK
 9. cgroup的回收机制和整个系统的回收机制的联系 OK
 2. 内存子系统中的LRU有什么用？OK 
+7. 如何统计文件cache? OK
