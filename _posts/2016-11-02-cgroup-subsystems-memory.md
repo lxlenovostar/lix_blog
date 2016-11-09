@@ -161,9 +161,6 @@ add_to_page_cache_locked==>
 - (Memory) Usage -= PAGE_SIZE
 - Remove the check
 
-## LRU
-Memory controller has its own LRU. These LRUs are maintained per-zone.   
-
 ## 页面回收
 页面回收流程如下：   
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-cgroup-subsystems-memory-2.jpg)   
@@ -201,17 +198,12 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *memcg,
 ```   
 sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面回收。
 
-
 ## 应用中需要注意
-
+1. cgroup统计内存的时刻为进程加入到cgroup,而在这之前进程使用内存不统计。　　　
+2. cgroup内存子系统只是设置了使用的上线，当需要使用内存的时候需要临时分配，而不是提前分配准备。
+3. cgroup并没有创造出一个隔离的环境，操作系统可以回收cgroup的内存。
 
 # 需要理解的问题：
 6. 命名空间 和 如何实现Docker ?  
 8. 为什么要强调是以线程统计?
 5. 内核/proc统计内存的方法？
-1. 内存子系统如何和进程联系起来？ OK 
-4. res_counter 和内存子系统的联系？ OK
-3. charge在具体内存分配中的应用举例？参考github的博客。OK
-9. cgroup的回收机制和整个系统的回收机制的联系 OK
-2. 内存子系统中的LRU有什么用？OK 
-7. 如何统计文件cache? OK
