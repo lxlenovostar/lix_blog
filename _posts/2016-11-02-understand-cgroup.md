@@ -25,12 +25,12 @@ cgroups是Linux内核提供的一种机制，这种机制可以根据特定的�
 进行资源调度。hierarchy中的cgroup节点可以包含零或多个子节点，子节点继承父节点的属性。整个系统可以有多个hierarchy。
 
 ## cgroup的基本规则
-大家在namespace技术的讲解中已经了解到，传统的Unix进程管理，实际上是先启动init进程作为根节点，   
-再由init节点创建子进程作为子节点，而每个子节点由可以创建新的子节点，如此往复，形成一个树状结构。    
-而cgroups也是类似的树状结构，子节点都从父节点继承属性。它们最大的不同在于，系统中cgroup构成的   
-hierarchy可以允许存在多个。如果进程模型是由init作为根节点构成的一棵树的话，那么cgroups的模型则是    
-由多个hierarchy构成的森林。这样做的目的也很好理解，如果只有一个hierarchy，那么所有的task都要受到   
-绑定其上的subsystem的限制，会给那些不需要这些限制的task造成麻烦。   
+传统的Unix进程管理，实际上是先启动init进程作为根节点,再由init节点创建子进程作为子节点，而每个子   
+节点由可以创建新的子节点，如此往复，形成一个树状结构。而cgroups也是类似的树状结构，子节点都从父   
+节点继承属性。它们最大的不同在于，系统中cgroup构成的hierarchy可以允许存在多个。如果进程模型是   
+由init作为根节点构成的一棵树的话，那么cgroups的模型则是由多个hierarchy构成的森林。这样做的目的   
+也很好理解，如果只有一个hierarchy，那么所有的task都要受到绑定其上的subsystem的限制，会给那些不   
+需要这些限制的task造成麻烦。   
 
 ### 规则1   
 同一个hierarchy可以附加一个或多个subsystem。如下图，cpu和memory的subsystem附加到了一个hierarchy。      
@@ -62,7 +62,7 @@ hierarchy中的多个cgroup是为了防止出现矛盾，如CPU subsystem为/cg1
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-4.png)   
 
 ### cgroup实现
-cgroups的实现本质上是给系统进程挂上钩子（hooks），当task运行的过程中涉及到某个资源时就会触发钩子上所附带
+cgroups的实现本质上是给系统进程挂上钩子（hooks），当task运行的过程中涉及到某个资源时就会触发钩子上所附带   
 的subsystem进行检测，最终根据资源类别的不同使用对应的技术进行资源限制和优先级分配。   
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-5.jpg)   
 
@@ -82,14 +82,13 @@ task的css_set。css_set结构中则包含tasks头指针，指向所有链到此
 查看在同一个cgroup中的task有哪些了，如下图。    
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-understand-cgroup-7.jpg)   
 
-# TODO: 这里理解的不清楚。   
 那么为什么要使用cg_cgroup_link结构体呢？因为task与cgroup之间是多对多的关系。熟悉数据库的读者很容易理解，在数据库中，   
 如果两张表是多对多的关系，那么如果不加入第三张关系表，就必须为一个字段的不同添加许多行记录，导致大量冗余。通过从主表   
 和副表各拿一个主键新建一张关系表，可以提高数据查询的灵活性和效率。    
 而一个task可能处于不同的cgroup，只要这些cgroup在不同的hierarchy中，并且每个hierarchy挂载的子系统不同；另一方面，一个   
 cgroup中可以有多个task，这是显而易见的，但是这些task因为可能还存在在别的cgroup中，所以它们对应的css_set也不尽相同，所以   
 一个cgroup也可以对应多个css_set。在系统运行之初，内核的主函数就会对root cgroups和css_set进行初始化，每次task进行fork/exit   
-时，都会附加（attach）/分离（detach）对应的css_set。
+时，都会附加（attach）/分离（detach）对应的css_set。   
 综上所述，添加cg_cgroup_link主要是出于性能方面的考虑，一是节省了task_struct结构体占用的内存，二是提升了进程fork()/exit()的速度。
 
 定义子系统的结构体是cgroup_subsys，在下图中可以看到，cgroup_subsys中定义了一组函数的接口，让各个子系统自己去实现，   
