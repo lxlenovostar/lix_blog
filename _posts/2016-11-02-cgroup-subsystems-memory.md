@@ -26,7 +26,7 @@ memory子系统是通过linux的resource counter机制实现的。resource count
 res_counter的结构体来管理特定资源，定义如下：   
 ```
 struct res_counter {   
-	//Usage 用于记录当前已使用的资源 
+	//usage 用于记录当前已使用的资源 
 	unsigned long long usage;
 	//max_usage 用于记录使用过的最大资源量 
 	unsigned long long max_usage;
@@ -47,8 +47,8 @@ void res_counter_init(struct res_counter *counter, struct res_counter *parent)
 int res_counter_charge(struct res_counter *counter, unsigned long val,struct res_counter **limit_fail_at)
 void res_counter_uncharge(struct res_counter *counter, unsigned long val)
 ```
-当资源将要被分配的时候，资源就要被记录到相应的res_counter里。这个函数作用就是记录进程组使用的资源。   
-在这个函数中有:   
+函数res_counter_charge作用就是记录进程组使用的资源。   
+在这个函数中:   
 ```
 for (c = counter; c != NULL; c = c->parent) {
 	spin_lock(&c->lock);
@@ -60,7 +60,7 @@ for (c = counter; c != NULL; c = c->parent) {
 	}
 }
 ```
-在这个循环里，从当前res_counter开始，从下往上逐层增加资源的使用量。我们来看一下   
+在这个循环里，从当前res_counter开始，从下往上逐层增加资源的使用量。    
 res_counter_charge_locked这个函数，这个函数顾名思义就是在加锁的情况下增加使用   
 量。实现如下:   
 ```
@@ -81,7 +81,7 @@ res_counter_charge_locked这个函数，这个函数顾名思义就是在加锁�
 内存子系统定义了一个叫mem_cgroup的结构体来管理cgroup相关的内存使用信息。
 ```
 struct mem_cgroup {
-	//**TODO**cgroup_subsys_state成员，便于task或cgroup获取mem_cgroup。
+	/* cgroup_subsys_state成员，便于task或cgroup获取mem_cgroup。*/   
 	struct cgroup_subsys_state css;	
 	/* 两个res_counter成员，分别用于管理memory资源和memory+swap资源 */
 	struct res_counter res;
@@ -114,12 +114,19 @@ struct mem_cgroup {
 内核的实现是通过mm_struct知道术语它的进程，通过函数mem_cgroup_from_task()得到mem_cgroup,然后进行内存统计。   
 
 ### cgroup的任务和内存子系统之间的联系
-**mm_struct==>task_struct==>cgroup_subsys_state=>mem_cgroup==>res**
+**mm_struct==>task_struct==>css_set==>cgroup_subsys_state=>mem_cgroup==>res**
 ```
 mem_cgroup_from_task ==>
 	mem_cgroup_from_css ==>
 		task_css ==>
 			task_css_check 
+```
+```
+struct mem_cgroup *mem_cgroup_from_css(struct cgroup_subsys_state *s)
+{
+    return s ? container_of(s, struct mem_cgroup, css) : NULL;
+}
+
 ```
 
 ## Charge/Uncharge
@@ -162,8 +169,12 @@ add_to_page_cache_locked==>
 - Remove the check
 
 ## 页面回收
+1. 如果内核检测到某个操作期间内存严重不足，将调用try_to_free_pages。该函数检查当前内存域中所有页，并释放最不常用的那些。　　　
+2. 一个后台守护进程，名为kswaped，会定期检查内存使用情况，并检测即将发生的内存不足。可使用该守护进程换出页，作为预防措施，   
+以防内核在执行其他操作期间发生内存不足。   
 页面回收流程如下：   
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2016-11-02-cgroup-subsystems-memory-2.jpg)   
+
 Global VM's memory reclaim logic is triggered at memory shortage in a zone.
 1. It's important where we reclaim memory from and the kernel may have to reclaim continuous pages.
 2. Kswapd works.
@@ -198,7 +209,7 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *memcg,
 ```   
 sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面回收。
 
-## 应用中需要注意
+## 应用中需要注意的要素
 1. cgroup统计内存的时刻为进程加入到cgroup,而在这之前进程使用内存不统计。　　　
 2. cgroup内存子系统只是设置了使用的上线，当需要使用内存的时候需要临时分配，而不是提前分配准备。
 3. cgroup并没有创造出一个隔离的环境，操作系统可以回收cgroup的内存。
