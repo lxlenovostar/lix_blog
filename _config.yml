@@ -1,3 +1,4 @@
 baseurl: /lix_blog
 markdown: kramdown
 markdown_ext: "markdown,mkdown,mkdn,mkd,md"
+theme: Time machine
