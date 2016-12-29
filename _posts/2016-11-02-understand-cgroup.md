@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title: 理解cgroup实现 
 ---
 # 理解cgroup实现

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title: IP 分片  
 ---
 ## IP Fragmentation 

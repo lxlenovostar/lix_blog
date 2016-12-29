@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title: 结构体 skb_shared_info  
 ---
 ## skb_shared_info 
