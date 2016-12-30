@@ -1,5 +1,4 @@
 ---
-layout: default
 title: cgroup 内存子系统 
 ---
 # cgroup 内存子系统 

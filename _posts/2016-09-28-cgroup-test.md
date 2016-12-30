@@ -1,5 +1,4 @@
 ---
-layout: default
 title: cgroup 实验 
 ---
 # cgroup 实验 

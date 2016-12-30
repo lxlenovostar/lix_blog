@@ -1,5 +1,4 @@
 ---
-layout: default 
 title: 理解cgroup实现 
 ---
 # 理解cgroup实现

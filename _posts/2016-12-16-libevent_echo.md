@@ -1,5 +1,4 @@
 ---
-layout: default
 title: libevent echo client 
 ---
 # libevent echo client 
