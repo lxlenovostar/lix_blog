@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: cgroup 内存子系统 
 ---
 # cgroup 内存子系统 
@@ -218,4 +218,3 @@ sc的成员变量nodemask为NULL，说明可以对所有内存node进行页面�
 6. 命名空间 和 如何实现Docker ?  
 8. 为什么要强调是以线程统计?
 5. 内核/proc统计内存的方法？
-{% include references.md %}

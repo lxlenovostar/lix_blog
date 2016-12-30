@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default 
 title: 理解cgroup实现 
 ---
 # 理解cgroup实现
@@ -108,4 +108,3 @@ VFS 文件系统定义了以下对象模型：
 2. 索引节点对象(inode object):存放关于具体文件的一般信息。
 3. 文件对象（ file object）:存放打开文件与进程之间的交互信息
 4. 目录项对象(dentry object):存放目录项与对应文件进行链接的有关信息。
-{% include references.md %}

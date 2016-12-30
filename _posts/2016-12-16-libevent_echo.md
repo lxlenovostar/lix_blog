@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: libevent echo client 
 ---
 # libevent echo client 
@@ -17,4 +17,3 @@ event_base会在合适的时间（不一定是立即）去调用绑定在这个�
  
 ##　关键代码
 
-{% include references.md %}

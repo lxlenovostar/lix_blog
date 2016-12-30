@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: 结构体 skb_shared_info  
 ---
 ## skb_shared_info 
@@ -56,4 +56,3 @@ in the *socket buffer structure(struct sk_buff)*, which points to the end of the
 
 # TODO GRO   
 
-{% include references.md %}

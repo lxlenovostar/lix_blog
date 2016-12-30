@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: IP 分片  
 ---
 ## IP Fragmentation 
@@ -72,4 +72,3 @@ Chapter 9 for more details about IP fragmentation. TCP segmentation, however, is
 common because it is the underlying mechanism for the transport of streaming data that occurs
 in most network traffic.
 
-{% include references.md %}

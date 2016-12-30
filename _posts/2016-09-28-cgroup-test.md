@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: cgroup 实验 
 ---
 # cgroup 实验 
@@ -69,4 +69,3 @@ done;
 ```
 执行此脚本，当此进程试图占用的内存超过了cgroups的限制，会触发out of memory，导致进程被kill掉。
 
-{% include references.md %}

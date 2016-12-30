@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: 自定义TCP包 
 ---
 
@@ -274,4 +274,3 @@ hook函数如下：
 
 ### github地址
 [github地址](https://github.com/lxlenovostar/kernel_test/tree/master/model/build_receive_tcp)
-{% include references.md %}
