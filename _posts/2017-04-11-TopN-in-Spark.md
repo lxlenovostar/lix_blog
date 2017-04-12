@@ -95,3 +95,10 @@ collect()将整个RDD的内容返回，因此其要求所有数据必须能一�
 这里也可以使用reduce()函数并行整合RDD中所有数据。
 
 ## Spark Implementation: Nonunique Keys 
+对于键值不唯一的情况，我们必须先让Key唯一。
+1. Make all Ks unique. To make Ks unique, we will map our input into
+JavaPairRDD<K, V> pairs and then reduceByKey().
+2. Partition all unique (K, V) pairs into M partitions.
+3. Find the top N for each partition (we’ll call this a local top N).
+4. Find the top N from all local top Ns.
+
