@@ -1,5 +1,6 @@
 ---
 title: Spark实现TopN 
+categories: Spark
 ---
 ## 概述
 对超过单机内存容量的(K, V)对进行TopN排序，在键值K是否重复的情况   
@@ -35,6 +36,10 @@ JavaRDD<String> lines = ctx.textFile(inputPath, 1);
       * <U> JavaRDD<U> mapPartitions(FlatMapFunction<java.util.Iterator<T>,U> f)
       * Return a new RDD by applying a function to each partition of this RDD.
       *
+      * mapPartitions(func)	Similar to map, but runs separately on each partition   
+      * (block) of the RDD, so func must be of type Iterator<T> => Iterator<U> when   
+      * running on an RDD of type T.
+      *
       * public interface FlatMapFunction<T,R> extends java.io.Serializable
       * A function that returns zero or more output records from each input record.
       *
@@ -58,8 +63,35 @@ JavaRDD<String> lines = ctx.textFile(inputPath, 1);
          }
       });
 ```
+根据《Learning Spark》的4.5节Data Patitioning的论述:
+> Spark’s partitioning is available on all RDDs of key/value pairs, and causes the system
+to group elements based on a function of each key. Although Spark does not give
+explicit control of which worker node each key goes to (partly because the system is
+designed to work even if specific nodes fail), it lets the program ensure that a set of
+keys will appear together on some node.   
 
-6. collect all local top 10s and create a final top 10 list
-7. output the final top 10 list
+Spark会自动对数据分区，而在分区的基础上mapPartitions进行工作。
 
 
+### 5. 通过对各个分区的TopN处理，获得最终的TopN
+```
+  SortedMap<Integer, String> finaltop10 = new TreeMap<Integer, String>();
+      List<SortedMap<Integer, String>> alltop10 = partitions.collect();
+      for (SortedMap<Integer, String> localtop10 : alltop10) {
+          //System.out.println(tuple._1 + ": " + tuple._2);
+          //weight/count = tuple._1
+          //catname/URL = tuple._2
+          for (Map.Entry<Integer, String> entry : localtop10.entrySet()) {
+              //System.out.println(entry.getKey() + "--" + entry.getValue());
+              finaltop10.put(entry.getKey(), entry.getValue());
+              // keep only top 10 
+              if (finaltop10.size() > 10) {
+                 finaltop10.remove(finaltop10.firstKey());
+              }
+          }
+      }
+```
+collect()将整个RDD的内容返回，因此其要求所有数据必须能一同放入当台机器的内存中。   
+这里也可以使用reduce()函数并行整合RDD中所有数据。
+
+## Spark Implementation: Nonunique Keys 
