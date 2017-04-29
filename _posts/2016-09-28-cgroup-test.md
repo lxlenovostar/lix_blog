@@ -23,12 +23,12 @@ mkdir -p /cgroup/memory/limit_user
 
 ## 设置控制条件
 ```
-echo 50000 > /cgroup/cpu/limit_user/cpu.cfs_quota_us
+echo 500000 > /cgroup/cpu/limit_user/cpu.cfs_quota_us
 ```
-# TODO 需要再次理解　
-以上的命令是指此控制组只可以使用50%的CPU。*cfs_period_us*表示控制组可以访问CPU的时间段,并微秒为单位，   
-*cfs_quota_us*表示控制组在执行时间中的配额。如果让一个cgroup中的task可以执行0.2秒，那么就需要设置  
-*cfs_quota_us*为200000 和 *cpu.cfs_period_us* 为 1000000.
+以上的命令是指此控制组只可以使用50%的CPU。*cfs_period_us*表示控制组可以访问   
+CPU的时间段,并以微秒为单位,*cfs_quota_us*表示控制组在执行时间中的配额。如果   
+让一个cgroup中的task可以执行0.2秒，那么就需要设置*cfs_quota_us*为200000 和    
+*cpu.cfs_period_us* 为 1000000.这里10000000的单位为微秒。
 
 ```
 echo 1048576 >  /cgroup/memory/limit_user/memory.limit_in_bytes
