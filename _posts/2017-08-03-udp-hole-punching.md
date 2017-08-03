@@ -46,7 +46,10 @@ A的公网和私网的endpoint发送UDP报文，并且自动锁定第
 
 ### 终端位于同一个NAT设备后面
 两个终端都位于同一个NAT设备后面，位于同一个内网中,是
-最“简单”的一种场景。
+最“简单”的一种场景。    
+在UDP punching之前的情况如下：
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-1.png)   
+##TODO
 
 ### 终端位于不同的NAT设备后面
 最普遍的一种情景，两个终端分别位于不同的NAT设备后面，    
