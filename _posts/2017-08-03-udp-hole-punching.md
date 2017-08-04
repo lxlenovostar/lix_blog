@@ -49,7 +49,16 @@ A的公网和私网的endpoint发送UDP报文，并且自动锁定第
 最“简单”的一种场景。    
 在UDP punching之前的情况如下：
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-1.png)   
-##TODO
+如上图，终端A需要通过服务器S的支持下与终端B连接。终端A的    
+内网endpoint是10.0.0.1:1000,经过NAT设备映射之后的endpoint   
+是100.0.0.1:2000。终端B的内网endpoint是11.0.0.1:1000，经过    
+NAT设备映射之后的endpoint是100.0.0.1:2010。服务器S的     
+endpoint是111.0.0.1:9000。     
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-2.png)   
+如上图的A1,终端A向服务器S发出请求报文与终端B进行连接。如A2，     
+服务器S将终端B的公网和私网endpoint信息发给终端A。   
+
+
 
 ### 终端位于不同的NAT设备后面
 最普遍的一种情景，两个终端分别位于不同的NAT设备后面，    
