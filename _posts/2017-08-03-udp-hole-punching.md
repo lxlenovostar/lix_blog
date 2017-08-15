@@ -49,44 +49,46 @@ A的公网和私网的endpoint发送UDP报文，并且自动锁定第
 最“简单”的一种场景。    
 在UDP punching之前的情况如下：
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-1.png)   
-如上图，终端A需要通过服务器S的支持下与终端B连接。终端A的    
-内网endpoint是10.0.0.1:1000,经过NAT设备映射之后的endpoint   
-是100.0.0.1:2000。终端B的内网endpoint是11.0.0.1:1000，经过    
-NAT设备映射之后的endpoint是100.0.0.1:2010。服务器S的     
-endpoint是111.0.0.1:9000。     
+如上图，终端A的内网endpoint是10.0.0.1:1000,经过NAT设备     
+映射之后的endpoint是100.0.0.1:2000。终端B的内网endpoint      
+是11.0.0.1:1000，经过NAT设备映射之后的endpoint是     
+100.0.0.1:2010。服务器S的endpoint是111.0.0.1:9000。     
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-2.png)   
-如上图的A1,终端A向服务器S发出请求报文与终端B进行连接。如A2，     
-服务器S将终端B的公网和私网endpoint信息发给终端A。如图A3，    
-终端A向终端B的公网endpoint发送报文，这个时候终端A发给终端B    
-的公网endpoint的报文在终端B向终端A发送报文之前到达终端B的NAT，     
-终端B的NAT会认为终端A发过来的报文是未经授权的公网报文，会丢弃    
-掉该报文。因此只有在如B3，终端B向终端A的公网endpoint发送报文    
-之后，A3这条通道才会畅通。如A4，终端A向终端B的私网endpoint    
-发送报文，由于终端A和终端B不在一个内网，此通道将不可达。如B2,     
-服务器S将终端A的公网和私网的endpoint反馈给终端B,如B3,终端B    
-向终端A的公网endpoint发送报文，由于A3的时候建立终端A通过NAT A     
-到NAT B的映射，此时终端B发往终端A的报文不会被NAT A丢失。如B4，    
-和A4一样由于不在一个内网将发送报文失败。       
+如上图A1，终端A向服务器S请求终端B的公网和私网endpoint。       
+如上图A3，终端A向终端B的公网endpoint发送报文，当NAT支持    
+回环转换(hairpin translation)的情况下，同一个NAT环境下     
+终端A和终端B才可以连通。但是终端A与B往对端私网endpoint      
+发送的UDP报文是一定可以到达的，无论如何，私网报文采用         
+最短转发路径，要比经过NAT转换来的快。终端A与B有很大的      
+可能性采用私网的endpoint进行常规的通信。              
 
 
 
 ### 终端位于不同的NAT设备后面
 最普遍的一种情景，两个终端分别位于不同的NAT设备后面，    
 分属不同的内网。    
-
-如上图的A1,终端A向服务器S发出请求报文与终端B进行连接。如A2，     
-服务器S将终端B的公网和私网endpoint信息发给终端A。如图A3，    
-终端A向终端B的公网endpoint发送报文，这个时候终端A发给终端B    
-的公网endpoint的报文在终端B向终端A发送报文之前到达终端B的
-NAT，终端B的NAT会认为终端A发过来的报文是未经授权的公网报    
-文，会丢弃掉该报文。因此只有在如B3，终端B向终端A的公网    
-endpoint发送报文之后，A3这条通道才会畅通。如A4，终端A     
-向终端B的私网endpoint发送报文，由于终端A和终端B不在一     
-个内网，此通道将不可达。如B2, 服务器S将终端A的公网和私     
-网的endpoint反馈给终端B,如B3,终端B向终端A的公网endpoint    
-发送报文，由于A3的时候建立终端A通过NAT A到NAT B的映射，       
-此时终端B发往终端A的报文不会被NAT A丢失。如B4,和A4一样       
-由于不在一个内网将发送报文失败。       
+在UDP punching之前的情况如下：
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-4.png)   
+如上图，终端A需要通过服务器S的支持下与终端B连接。终端A的    
+内网endpoint是10.0.0.1:1000,经过NAT A设备映射之后的endpoint   
+是100.0.0.1:2000。终端B的内网endpoint是11.0.0.1:1000，经过    
+NAT B设备映射之后的endpoint是101.0.0.1:2010。服务器S的     
+endpoint是111.0.0.1:9000。 
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-5.png)   
+如上图的A1,终端A向服务器S发出请求报文与终端B进行连接。                 
+如A2，服务器S将终端B的公网和私网endpoint信息发给终端A。           
+如图A3，终端A向终端B的公网endpoint发送报文，这个时候            
+终端A发给终端B的公网endpoint的报文在终端B向终端A发送            
+报文之前到达终端B的NAT，终端B的NAT会认为终端A发过来的            
+报文是未经授权的公网报文，会丢弃掉该报文。因此只有在             
+B3，终端B向终端A的公网endpoint发送报文之后，A3这条通             
+道才会畅通。如A4，终端A向终端B的私网endpoint发送报文，           
+由于终端A和终端B不在一个内网，此通道将不可达。如B2,             
+服务器S将终端A的公网和私网的endpoint反馈给终端B,如B3,            
+终端B向终端A的公网endpoint发送报文，由于A3的时候建立              
+终端A通过NAT A到NAT B的映射，此时终端B发往终端A的报文            
+不会被NAT A丢失。如B4,和A4一样由于不在一个内网将发送              
+报文失败。       
 
 
 
