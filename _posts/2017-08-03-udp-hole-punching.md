@@ -95,6 +95,20 @@ B3，终端B向终端A的公网endpoint发送报文之后，A3这条通
 ### 终端位于多层的NAT设备后面
 终端位于两层NAT设备之后，通常最上层的NAT是由ISP提供，    
 第二层的NAT是家用的NAT路由器之类的设备。    
+![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-7.png)     
+如上图所示，假定NAT C是由ISP(Internet Service Provider)      
+提供的工业级的NAT设备，NAT C提供将多个下属的用户NAT或      
+用户节点映射到有限的几个公网IP的服务，NAT A和NAT B作为      
+NAT C的内网节点将把用户的家庭网络或内部网络接入NAT C的       
+内网，然后用户的内部网络就可以经由NAT C访问公网了。从这        
+种拓扑结构上来看，只有服务器S与NAT C是真正拥有公网可路由        
+IP地址的设备，而NAT A和NAT B所使用的“公网”IP地址，实际上        
+是由ISP服务提供商设定的（相对于NAT C而言）私网地址，同理       
+隶属于NAT A与NAT B的客户端，相对与NAT A，NAT B而言，它们        
+处于NAT A，NAT B的内网，以此类推，客户端可以放到多层NAT         
+设备后面。客户端A和客户端B发起对服务器S的连接的时候，就会         
+依次在NAT A和NAT B上建立向外的映射关系，而NAT A、NAT B要          
+联入公网的时候，会在NAT C上再建立向外的映射关系。
 
 
 
