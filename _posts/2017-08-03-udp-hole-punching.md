@@ -45,7 +45,7 @@ A的公网和私网的endpoint发送UDP报文，并且自动锁定第
 的时间先后没有严格的时序要求。     
 
 ### 终端位于同一个NAT设备后面
-两个终端都位于同一个NAT设备后面，位于同一个内网中,是
+两个终端都位于同一个NAT设备后面，位于同一个内网中,是      
 最“简单”的一种场景。    
 在UDP punching之前的情况如下：
 ![](https://raw.githubusercontent.com/lxlenovostar/lix_blog/gh-pages/images/2017-08-03-udp-hole-punching-1.png)   
